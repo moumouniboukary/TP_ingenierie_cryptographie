@@ -1,0 +1,56 @@
+# inter.cnf - AC intermediaire (Annexe B du sujet, listing 2). A lancer depuis le dossier du TP.
+# Ecarts avec l'annexe, tous signales par "AJOUT" :
+#   - unique_subject = no : sans cela, openssl ca refuse de signer un second certificat
+#     pour le meme nom (renouvellement de www.tp.local par renouveler.sh).
+#   - ext_client_csr : variante de ext_client qui reprend le nom alternatif de la demande
+#     (CSR) au lieu de le fixer a alice@tp.local ; elle sert pour Bob et les autres clients.
+[ ca ]
+default_ca = ca_inter
+
+[ ca_inter ]
+dir               = ./inter
+database          = $dir/index.txt
+new_certs_dir     = $dir/newcerts
+serial            = $dir/serial
+crlnumber         = $dir/crlnumber
+certificate       = $dir/inter.crt
+private_key       = $dir/inter.key
+default_md        = sha256
+default_crl_days  = 7
+policy            = politique_souple
+# Les extensions de la demande (SAN) sont recopiees, sauf celles deja fixees ci-dessous.
+copy_extensions   = copy
+# AJOUT
+unique_subject    = no
+
+[ politique_souple ]
+countryName       = optional
+organizationName  = optional
+commonName        = supplied
+
+[ ext_serveur ]
+# Certificat final : ne peut pas signer.
+basicConstraints       = critical,CA:FALSE
+keyUsage               = critical,digitalSignature
+# Usage etendu : serveur TLS uniquement.
+extendedKeyUsage       = serverAuth
+subjectKeyIdentifier   = hash
+authorityKeyIdentifier = keyid
+
+[ ext_client ]
+basicConstraints       = critical,CA:FALSE
+keyUsage               = critical,digitalSignature
+# Usage etendu : client TLS uniquement.
+extendedKeyUsage       = clientAuth
+# Identite du client (annexe : alice). Ligne fixee dans la configuration.
+subjectAltName         = email:alice@tp.local
+subjectKeyIdentifier   = hash
+authorityKeyIdentifier = keyid
+
+# AJOUT : identique a ext_client, sans SAN fixe (le SAN vient de la CSR grace a copy_extensions).
+[ ext_client_csr ]
+basicConstraints       = critical,CA:FALSE
+keyUsage               = critical,digitalSignature
+extendedKeyUsage       = clientAuth
+subjectKeyIdentifier   = hash
+authorityKeyIdentifier = keyid

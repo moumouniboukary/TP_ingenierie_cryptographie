@@ -1,0 +1,39 @@
+# racine.cnf - AC racine (Annexe B du sujet, listing 1). A lancer depuis le dossier du TP.
+# Ecarts avec l'annexe, tous signales par "AJOUT" :
+#   - unique_subject = no  (voir inter.cnf)
+#   - commentaires expliquant le role de chaque ligne des extensions.
+[ ca ]
+default_ca = ca_racine
+
+[ ca_racine ]
+dir               = ./racine
+database          = $dir/index.txt
+new_certs_dir     = $dir/newcerts
+serial            = $dir/serial
+crlnumber         = $dir/crlnumber
+certificate       = $dir/racine.crt
+private_key       = $dir/racine.key
+default_md        = sha384
+default_crl_days  = 30
+policy            = politique_souple
+copy_extensions   = none
+# AJOUT : autorise plusieurs certificats de meme sujet dans la base.
+unique_subject    = no
+
+[ politique_souple ]
+countryName       = optional
+organizationName  = optional
+commonName        = supplied
+
+# Extensions appliquees au certificat de l'AC intermediaire (-extensions ext_inter).
+[ ext_inter ]
+# CA:TRUE = peut signer des certificats ; pathlen:0 = seulement des certificats finaux.
+basicConstraints       = critical,CA:TRUE,pathlen:0
+# Usages permis : signer des certificats (keyCertSign) et des CRL (cRLSign), rien d'autre.
+keyUsage               = critical,keyCertSign,cRLSign
+# Contraintes de nom : l'intermediaire ne peut valider que tp.local, ses sous-domaines
+# (.tp.local) et les adresses de courriel de tp.local.
+nameConstraints        = critical,permitted;DNS:.tp.local,permitted;DNS:tp.local,permitted;email:tp.local
+# Empreinte de la cle du sujet, et identifiant de la cle de l'emetteur (construction de la chaine).
+subjectKeyIdentifier   = hash
+authorityKeyIdentifier = keyid

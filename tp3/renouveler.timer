@@ -1,0 +1,25 @@
+# --- /etc/systemd/system/renouveler.service ---
+[Unit]
+Description=Renouvellement du certificat www.tp.local si expiration < 30 jours
+
+[Service]
+Type=oneshot
+Environment=PKI_DIR=/srv/pki TLS_DIR=/etc/nginx/tls
+ExecStart=/usr/local/sbin/renouveler.sh
+ExecStartPost=/usr/local/bin/surveiller.py /etc/nginx/tls
+
+# --- /etc/systemd/system/renouveler.timer ---
+[Unit]
+Description=Execution quotidienne du renouvellement
+
+[Timer]
+OnCalendar=daily
+RandomizedDelaySec=1h
+Persistent=true
+
+[Install]
+WantedBy=timers.target
+
+# Activation : sudo systemctl enable --now renouveler.timer
+# Variante cron (root) :
+#   17 3 * * * PKI_DIR=/srv/pki /usr/local/sbin/renouveler.sh >> /var/log/renouveler.log 2>&1
